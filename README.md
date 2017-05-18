@@ -52,12 +52,6 @@ In this example we will create  a new Entity called Devices
 
 create the new file in Entity folder
 
-
-
-## Create a class to send push messages
-
-Now we will create a new Class called PushNotifications.php
-
 ``` [php]
 <?php
 
@@ -84,12 +78,12 @@ class Device {
     private $id; // private or protected is necesary for doctrine
     
     /**
-     * @var string $owner
+     * @var string $user
      *
-     * @ORM\Column(name="owner", type="string", length=150)
+     * @ORM\Column(name="user", type="string", length=150)
      */    
     //this could be a foreign key, but in this example we have used a string
-    private $owner;
+    private $user;
     
     /**
      * @var string $token
@@ -111,26 +105,29 @@ class Device {
         return $this->id;
     }
 
-    function getOwner() {
-        return $this->owner;
-    }
+    
 
     function getToken() {
         return $this->token;
     }
 
-   
-
-    // Dont make setId, doctrine MUST do it for you
-
-    function setOwner($owner) {
-        $this->owner = $owner;
-    }
-
-    function setToken($token) {
+   function setToken($token) {
         $this->token = $token;
     }
 
+    // Dont make setId, doctrine MUST do it for you
+
+    
+
+    function getUser() {
+        return $this->user;
+    }
+
+    function setUser($user) {
+        $this->user = $user;
+    }
+
+    
     function getManufacturer() {
         return $this->manufacturer;
     }
@@ -144,7 +141,92 @@ class Device {
 ```
 
 now we must update the doctrine schema with this command from our project's folder:
+
 php app/console doctrine:schema:update --force
 
 Now, our class is ready to store tokens of our users's devices
 
+
+## Create a class to send push messages
+
+Now we will create a new Class called PushMessagesAndroid.php in Entity folder
+
+``` [php]
+<?php
+
+namespace Examples\PushNotificationBundle\Entity;
+
+class PushMessagesAndroid {
+
+    private static $androidAuthKey = "your api key here";
+    
+    public static function sendMessage($tokenArray,$params) {
+        $data = array(
+            'registration_ids' => $tokenArray, 
+            'data' => $params
+        );
+        $headers = array(
+            "Content-Type:application/json",
+            "Authorization:key=" . self::$androidAuthKey
+        );
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, "https://fcm.googleapis.com/fcm/send");
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        $result = curl_exec($ch);
+        curl_close($ch);  
+        
+       return $result; //we return the response of the server, this will be the data thats the controller will return in a Response
+    }       
+}
+```
+
+## Call your new class from a controller and return  a Response
+
+create a new controller called PushNotificationController.php in the Controller folder
+``` [php]
+<?php
+namespace Examples\PushNotificationBundle\Controller;
+
+use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Examples\PushNotificationBundle\Entity\PushMessagesAndroid;
+
+class PushNotificationController extends Controller {
+            
+    public function sendPushMessageAction(Request $request) {
+        
+       if ($request->getMethod() != 'POST') {
+           return new Response("Request is not POST");
+       }
+      
+       $title = $request->request->get("title");
+       $message = $request->request->get("message");
+       
+       if (!$title || !$message) {
+           return new Response('Empty paramters');
+       }
+       $em = $this->getDoctrine()->getManager();
+        
+       $devices = $em->getRepository("PushNotificationBundle:Device")->findAll(); //we will send the notification to all devices
+        
+       if (!$devices) {
+           return new Response("There aren't any devices registered");
+       }
+        
+       $tokens = array(); //we must store the tokens which we want to send a message
+       foreach ($devices as $d) {
+           $tokens[] = $d->getToken();
+       }
+              
+       $params = array ("title"    =>  $title,    "message"   =>  $message, "id"  => 55); // the id put whatever you want
+              
+       return new Response(PushMessagesAndroid::sendMessage($tokens, $params) );       
+    }    
+}
+```
