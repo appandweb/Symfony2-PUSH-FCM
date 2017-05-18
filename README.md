@@ -1,5 +1,5 @@
 # Symfony2-PUSH-FCM
-Server-side PUSH notifications using Firebase (FCM), implemented in Symfony2
+Server-side PUSH notifications using Firebase (FCM), implemented in Symfony2 with a POST request
 
 In this repository, i will teach how implement PUSH notifications in a Symfony2's project
 
@@ -9,7 +9,7 @@ In this repository, i will teach how implement PUSH notifications in a Symfony2'
 2. Create a Entity that store the tokens of your users
 3. Create a class to send push messages
 4. Call your new class from a controller and return  a Response
-5. add new route to the routing.yml of your new bundle
+5. Add new route to the routing.yml of your new bundle
 
 ## Create a new Bundle
 
@@ -230,3 +230,28 @@ class PushNotificationController extends Controller {
     }    
 }
 ```
+
+## Add new route to the routing.yml of your new bundle
+
+In our case we must create the routing.yml because our bundle is new
+
+1. Create a new folder called 'config' in the Resources folder of our bundle
+2. Create a new file inside config called 'routing.yml'
+3. Create the route of our bundle in app/config/routing.yml
+``` [yaml]
+push_messages:
+    resource: "@PushNotificationBundle/Resources/config/routing.yml"
+    prefix:   /push-messages
+```
+
+4. Create the route to send push messages in the routing.yml of **OUR** bundle
+``` [yaml]
+push_notifications_send:
+    path:     /send
+    defaults: { _controller: PushNotificationBundle:PushNotification:sendPushMessage } 
+                                 # BundleName:ControllerName:FunctionName
+```
+
+Now our web aplication can send push messages with Firebase
+Thanks for read, if you see and error or anything , tell me and i correct or improve.
+I expect that this tutorial can help you
