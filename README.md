@@ -6,7 +6,7 @@ In this repository, i will teach how implement PUSH notifications in a Symfony2'
 ### Steps:
 
 1. Create a new Bundle (this is not 100% necesary, but it is good to separate code of push notification from another functions )
-2. Create a Entity that store the tokens of your users
+2. Create a Entity that store the tokens of your users(if you don't have)
 3. Create a class to send push messages
 4. Call your new class from a controller and return  a Response
 5. Add new route to the routing.yml of your new bundle
