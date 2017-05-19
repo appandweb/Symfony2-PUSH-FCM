@@ -1,0 +1,3 @@
+push_messages:
+    resource: "@PushNotificationBundle/Resources/config/routing.yml"
+    prefix:   /push-messages

@@ -1,0 +1,4 @@
+push_notifications_send:
+    path:     /send
+    defaults: { _controller: PushNotificationBundle:PushNotification:sendPushMessage } 
+                                 # BundleName:ControllerName:FunctionName
